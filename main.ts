@@ -13,7 +13,7 @@
 // the performance review ("This jam is my performance review of you"). Full
 // comparison: u-mang-the-printer-finally-answers-8fbf0907-candidates.md.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const LINE =
@@ -28,7 +28,13 @@ if (length < 1 || length > 240 || LINE.trim().length === 0) {
 }
 
 // Write exactly LINE — no trailing newline, so the file holds 102 chars
-// (102 code points, the way the gate counts) and nothing else.
+// (102 code points, the way the gate counts) and nothing else. Then read it
+// back and refuse to finish unless the file is byte-identical to LINE, so a
+// run that wrote anything else fails loudly instead of passing a bad entry.
 const dir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 mkdirSync(dir, { recursive: true });
-writeFileSync(join(dir, "entry.txt"), LINE, "utf-8");
+const target = join(dir, "entry.txt");
+writeFileSync(target, LINE, "utf-8");
+if (readFileSync(target, "utf-8") !== LINE) {
+  throw new Error("entry.txt does not match the line exactly");
+}
